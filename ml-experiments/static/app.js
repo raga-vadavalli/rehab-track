@@ -137,7 +137,7 @@ function enterNewMode() {
   applyExerciseMeta("bicep_curl");
   document.getElementById("f-ext").value   = "150";
   document.getElementById("f-flex").value  = "60";
-  document.getElementById("btn-start").disabled = true;
+  document.getElementById("btn-start").disabled = false;
   document.getElementById("btn-save").textContent  = "Create";
   document.getElementById("btn-cancel").style.display = "";
   clearErrors();
@@ -164,11 +164,20 @@ const EXERCISE_META = {
     flexMin: 70, flexMax: 130, flexDefault: 100,
     angleLabel: "Knee Angle",
   },
+  shoulder_press: {
+    extLabel:  "Extension Angle (arms fully pressed up)",
+    flexLabel: "Flexion Angle (bar at shoulder level)",
+    extHint:   "140\u00b0 \u2013 180\u00b0  (ask your physiotherapist)",
+    flexHint:  "70\u00b0 \u2013 110\u00b0  (ask your physiotherapist)",
+    extMin: 140, extMax: 180, extDefault: 160,
+    flexMin: 70, flexMax: 110, flexDefault: 90,
+    angleLabel: "Elbow Angle",
+  },
 };
 
 function applyExerciseMeta(exercise) {
   const m = EXERCISE_META[exercise] || EXERCISE_META.bicep_curl;
-  const showAngles = exercise === "bicep_curl";
+  const showAngles = exercise === "bicep_curl" || exercise === "shoulder_press";
   document.getElementById("group-ext").style.display  = showAngles ? "" : "none";
   document.getElementById("group-flex").style.display = showAngles ? "" : "none";
   if (showAngles) {
@@ -225,7 +234,7 @@ function validateForm() {
   if (!name)              { showError("name", "Name is required.");          ok = false; }
   if (isNaN(reps) || reps < 1 || reps > 50)
     { showError("reps", "Reps must be between 1 and 50.");                   ok = false; }
-  if (exercise === "bicep_curl") {
+  if (exercise === "bicep_curl" || exercise === "shoulder_press") {
     if (isNaN(ext)  || ext < m.extMin  || ext > m.extMax)
       { showError("ext",  `Extension angle must be ${m.extMin}\u00b0-${m.extMax}\u00b0.`);  ok = false; }
     if (isNaN(flex) || flex < m.flexMin || flex > m.flexMax)
@@ -239,10 +248,11 @@ function validateForm() {
 function formPayload() {
   const exercise = document.getElementById("f-exercise").value || "bicep_curl";
   const m = EXERCISE_META[exercise] || EXERCISE_META.bicep_curl;
-  const ext  = exercise === "bicep_curl"
+  const useCustomAngles = exercise === "bicep_curl" || exercise === "shoulder_press";
+  const ext  = useCustomAngles
     ? parseFloat(document.getElementById("f-ext").value)
     : m.extDefault;
-  const flex = exercise === "bicep_curl"
+  const flex = useCustomAngles
     ? parseFloat(document.getElementById("f-flex").value)
     : m.flexDefault;
   return {
@@ -299,6 +309,13 @@ document.getElementById("btn-start").addEventListener("click", async () => {
   if (!validateForm()) return;
   const payload = formPayload();
   try {
+    // If in new mode, save the prescription first then start
+    if (isNewMode) {
+      const res = await api("POST", "/prescriptions", payload);
+      await loadPrescriptions();
+      selectPrescription(res.key);
+      isNewMode = false;
+    }
     await api("POST", "/session/start", {
       prescription_key: selectedKey || "new",
       prescription:     payload,
