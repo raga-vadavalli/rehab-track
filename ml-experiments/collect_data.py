@@ -11,6 +11,8 @@ Controls:
     4  — Heel Slide
     5  — Seated Knee Extension
     6  — Mini Squat
+    7  — Squat (full)
+    8  — Shoulder Press
     R  — Start / Stop recording for current exercise
     U  — Undo last session (delete it from the CSV)
     Q  — Quit and save
@@ -41,18 +43,23 @@ EXERCISES = {
     "4": "heel_slide",
     "5": "seated_knee_extension",
     "6": "mini_squat",
+    "7": "squat",
+    "8": "shoulder_press",
 }
 
 # Which angle to display live + acceptable range for each exercise
 # angle_key matches compute_angles() order:
-#   0=left_elbow, 1=right_elbow, 2=left_knee, 3=right_knee
+#   0=left_elbow, 1=right_elbow, 2=left_knee, 3=right_knee,
+#   4=left_shoulder, 5=right_shoulder
 EXERCISE_INFO = {
-    "elbow_flexion":         {"label": "Elbow angle",  "angle_key": 1, "ref": 120, "lo": 110, "hi": 130},
-    "biceps_curl":           {"label": "Elbow angle",  "angle_key": 1, "ref":  90, "lo":  80, "hi": 100},
-    "forearm_rotation":      {"label": "Elbow angle",  "angle_key": 1, "ref":  90, "lo":  85, "hi":  95},
-    "heel_slide":            {"label": "Knee angle",   "angle_key": 3, "ref": 110, "lo": 100, "hi": 120},
-    "seated_knee_extension": {"label": "Knee angle",   "angle_key": 3, "ref":   0, "lo":   0, "hi":  10},
-    "mini_squat":            {"label": "Knee angle",   "angle_key": 3, "ref":  45, "lo":  40, "hi":  50},
+    "elbow_flexion":         {"label": "Elbow angle",    "angle_key": 1, "ref": 120, "lo": 110, "hi": 130},
+    "biceps_curl":           {"label": "Elbow angle",    "angle_key": 1, "ref":  90, "lo":  80, "hi": 100},
+    "forearm_rotation":      {"label": "Elbow angle",    "angle_key": 1, "ref":  90, "lo":  85, "hi":  95},
+    "heel_slide":            {"label": "Knee angle",     "angle_key": 3, "ref": 110, "lo": 100, "hi": 120},
+    "seated_knee_extension": {"label": "Knee angle",     "angle_key": 3, "ref":   0, "lo":   0, "hi":  10},
+    "mini_squat":            {"label": "Knee angle",     "angle_key": 3, "ref":  45, "lo":  40, "hi":  50},
+    "squat":                 {"label": "Knee angle",     "angle_key": 3, "ref": 100, "lo":  90, "hi": 110},
+    "shoulder_press":        {"label": "Elbow angle",    "angle_key": 1, "ref": 160, "lo": 150, "hi": 170},
 }
 
 MODEL_DIR  = os.path.join(os.path.dirname(__file__), "models")
@@ -201,6 +208,9 @@ def main():
         print("ERROR: Cannot open webcam.")
         return
 
+    cv2.namedWindow("RehaTrack — Data Collector", cv2.WINDOW_NORMAL)
+    cv2.resizeWindow("RehaTrack — Data Collector", 960, 720)
+
     current_exercise = "elbow_flexion"
     recording         = False
     rep_count         = 0
@@ -278,11 +288,14 @@ def main():
             cv2.putText(frame, undo_message, (10, h // 2 + 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
 
-        cv2.rectangle(frame, (0, h - 52), (w, h), (30, 30, 30), -1)
-        row1 = "  ".join([f"[{k}]{v.replace('_',' ')}" for k, v in list(EXERCISES.items())[:3]])
-        row2 = "  ".join([f"[{k}]{v.replace('_',' ')}" for k, v in list(EXERCISES.items())[3:]])
-        cv2.putText(frame, row1, (8, h - 32), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (200, 200, 200), 1)
-        cv2.putText(frame, row2, (8, h - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (200, 200, 200), 1)
+        cv2.rectangle(frame, (0, h - 72), (w, h), (30, 30, 30), -1)
+        items = list(EXERCISES.items())
+        row1 = "  ".join([f"[{k}]{v.replace('_',' ')}" for k, v in items[:3]])
+        row2 = "  ".join([f"[{k}]{v.replace('_',' ')}" for k, v in items[3:6]])
+        row3 = "  ".join([f"[{k}]{v.replace('_',' ')}" for k, v in items[6:]])
+        cv2.putText(frame, row1, (8, h - 52), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (200, 200, 200), 1)
+        cv2.putText(frame, row2, (8, h - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (200, 200, 200), 1)
+        cv2.putText(frame, row3, (8, h -  8), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (200, 200, 200), 1)
 
         cv2.imshow("RehaTrack — Data Collector", frame)
 

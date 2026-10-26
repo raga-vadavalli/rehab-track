@@ -23,6 +23,7 @@ sys.path.insert(0, str(BASE))
 
 from bicep_curl import BicepCurlCounter, calculate_angle, check_bicep_curl_posture
 from squat import SquatCounter, check_squat_posture
+from shoulder_press import ShoulderPressCounter, check_shoulder_press_posture
 from session_store import get_session, list_sessions, save_session
 
 # -- Paths ------------------------------------------------------------------
@@ -159,6 +160,11 @@ class CameraWorker:
                 extension_angle=rx["extension_angle"],
                 flexion_angle=rx["flexion_angle"],
             )
+        elif exercise == "shoulder_press":
+            counter = ShoulderPressCounter(
+                extension_angle=rx["extension_angle"],
+                flexion_angle=rx["flexion_angle"],
+            )
         else:  # bicep_curl (default)
             counter = BicepCurlCounter(
                 extension_angle=rx["extension_angle"],
@@ -231,6 +237,38 @@ class CameraWorker:
                                                 0.7, (0, 210, 255), 2, cv2.LINE_AA)
                             else:
                                 feedback = "Keep your full body visible"
+
+                        elif exercise == "shoulder_press":
+                            shoulder = lm[12]; elbow = lm[14]
+                            wrist    = lm[16]; hip   = lm[24]
+
+                            if min(shoulder.visibility, elbow.visibility,
+                                   wrist.visibility, hip.visibility) > 0.5:
+
+                                angle = calculate_angle(
+                                    (shoulder.x*w, shoulder.y*h),
+                                    (elbow.x*w,    elbow.y*h),
+                                    (wrist.x*w,    wrist.y*h),
+                                )
+                                feedback, is_valid = check_shoulder_press_posture(
+                                    shoulder, elbow, wrist, hip
+                                )
+
+                                if is_valid and angle is not None:
+                                    reps, phase = counter.update(angle)
+
+                                if reps >= target_reps and not session_done:
+                                    session_done = True
+
+                                if angle is not None:
+                                    ex = int(elbow.x * w)
+                                    ey = int(elbow.y * h)
+                                    cv2.putText(frame, f"{angle:.0f}\u00b0",
+                                                (ex + 10, ey - 10),
+                                                cv2.FONT_HERSHEY_SIMPLEX,
+                                                0.7, (0, 210, 255), 2, cv2.LINE_AA)
+                            else:
+                                feedback = "Keep your arm and shoulder visible"
 
                         else:  # bicep_curl
                             shoulder = lm[12]; elbow = lm[14]

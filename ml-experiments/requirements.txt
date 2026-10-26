@@ -3,3 +3,7 @@ uvicorn[standard]
 pydantic
 mediapipe
 opencv-python
+scikit-learn
+pandas
+numpy
+matplotlib
