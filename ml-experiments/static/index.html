@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RehaTrack</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+<nav>
+  <span class="nav-brand">RehaTrack</span>
+  <div class="nav-links">
+    <button class="nav-btn active" data-page="prescriptions">Prescriptions</button>
+    <button class="nav-btn"        data-page="history">History</button>
+  </div>
+  <div style="margin-left:auto;">
+    <button class="btn btn-danger" id="nav-stop-btn"
+            style="display:none; padding:6px 16px; font-size:0.85rem;">
+      ■ Stop Session
+    </button>
+  </div>
+</nav>
+
+<main>
+
+  <!-- ── Prescriptions ──────────────────────────────────────────────── -->
+  <section id="sec-prescriptions" class="visible">
+    <h2>Select a Prescription</h2>
+    <div class="presc-layout">
+
+      <!-- Left: list -->
+      <div>
+        <h3>Patients</h3>
+        <div class="presc-list" id="presc-list">
+          <div class="empty-state">Loading…</div>
+        </div>
+        <button class="add-btn" id="btn-new">+ New Prescription</button>
+      </div>
+
+      <!-- Right: edit / review form -->
+      <div class="card" id="edit-panel">
+        <p class="form-title" id="form-title">Select a patient to review</p>
+
+        <div class="form-group">
+          <label for="f-name">Patient Name</label>
+          <input type="text" id="f-name" placeholder="e.g. John Smith" />
+          <span class="field-error" id="err-name"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="f-exercise">Exercise</label>
+          <select id="f-exercise">
+            <option value="bicep_curl">Bicep Curl</option>
+            <option value="squat">Squat</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="f-reps">Prescribed Reps</label>
+          <input type="number" id="f-reps" min="1" max="50" placeholder="5" />
+          <span class="field-hint">1 – 50 reps</span>
+          <span class="field-error" id="err-reps"></span>
+        </div>
+
+        <div class="form-group" id="group-ext">
+          <label id="lbl-ext" for="f-ext">Extension Angle (arm straight)</label>
+          <input type="number" id="f-ext" min="90" max="180" step="0.5" placeholder="150" />
+          <span class="field-hint" id="hint-ext">90° – 180°  (ask your physiotherapist)</span>
+          <span class="field-error" id="err-ext"></span>
+        </div>
+
+        <div class="form-group" id="group-flex">
+          <label id="lbl-flex" for="f-flex">Flexion Angle (arm curled)</label>
+          <input type="number" id="f-flex" min="10" max="90" step="0.5" placeholder="60" />
+          <span class="field-hint" id="hint-flex">10° – 90°  (ask your physiotherapist)</span>
+          <span class="field-error" id="err-flex"></span>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-outline" id="btn-save">Save Changes</button>
+          <button class="btn btn-primary" id="btn-start" disabled>▶ Start Session</button>
+          <button class="btn btn-ghost"   id="btn-cancel" style="display:none">Cancel</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Session ────────────────────────────────────────────────────── -->
+  <section id="sec-session">
+    <h2 id="session-title">Session</h2>
+
+    <div class="session-layout">
+
+      <!-- Video -->
+      <div class="video-wrap">
+        <img id="video-feed" alt="Live feed" />
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-panel">
+
+        <div class="stat-block">
+          <div class="stat-label">Reps</div>
+          <div class="stat-value accent" id="stat-reps">0 / --</div>
+        </div>
+
+        <div class="stat-block">
+          <div class="stat-label" id="stat-angle-label">Elbow Angle</div>
+          <div class="stat-value yellow" id="stat-angle">--</div>
+        </div>
+
+        <div class="stat-block">
+          <div class="stat-label">Phase</div>
+          <div class="stat-value small" id="stat-phase">Waiting</div>
+        </div>
+
+        <div class="stat-block">
+          <div class="stat-label">Elapsed</div>
+          <div class="stat-value small" id="stat-elapsed">0s</div>
+        </div>
+
+        <div class="form-bar bad" id="stat-feedback">Waiting for pose…</div>
+
+      </div>
+    </div>
+
+    <div class="session-stop">
+      <button class="btn btn-danger" id="btn-stop">■ Stop Session</button>
+    </div>
+  </section>
+
+  <!-- ── Summary ────────────────────────────────────────────────────── -->
+  <section id="sec-summary">
+    <h2>Session Summary</h2>
+    <div class="card">
+      <div class="summary-grid" id="summary-grid"></div>
+      <div class="form-actions">
+        <button class="btn btn-primary"  id="btn-new-session">New Session</button>
+        <button class="btn btn-outline"  id="btn-go-history">View History</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── History ────────────────────────────────────────────────────── -->
+  <section id="sec-history">
+    <h2>Session History</h2>
+    <div class="history-list" id="history-list">
+      <div class="empty-state">Loading…</div>
+    </div>
+  </section>
+
+</main>
+
+<div id="toast"></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

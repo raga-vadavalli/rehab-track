@@ -1,0 +1,42 @@
+{
+  "demo_a": {
+    "display_name": "Demo User A",
+    "exercise": "bicep_curl",
+    "arm": "right",
+    "target_reps": 5,
+    "extension_angle": 150.0,
+    "flexion_angle": 60.0
+  },
+  "demo_b": {
+    "display_name": "Demo User B",
+    "exercise": "bicep_curl",
+    "arm": "right",
+    "target_reps": 3,
+    "extension_angle": 140.0,
+    "flexion_angle": 80.0
+  },
+  "john": {
+    "display_name": "John",
+    "exercise": "bicep_curl",
+    "arm": "right",
+    "target_reps": 2,
+    "extension_angle": 160.0,
+    "flexion_angle": 80.0
+  },
+  "govindaa": {
+    "display_name": "Govindaa",
+    "exercise": "bicep_curl",
+    "arm": "right",
+    "target_reps": 2,
+    "extension_angle": 150.0,
+    "flexion_angle": 80.0
+  },
+  "raga": {
+    "display_name": "Raga",
+    "exercise": "bicep_curl",
+    "arm": "right",
+    "target_reps": 4,
+    "extension_angle": 160.0,
+    "flexion_angle": 80.0
+  }
+}

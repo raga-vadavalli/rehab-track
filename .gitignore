@@ -3,6 +3,10 @@
 __pycache__/
 *.pyc
 .vscode/
+.idea/
+
+# RehaTrack session data (local test data, not for repo)
+ml-experiments/sessions/
 
 # Flutter/Dart generated files
 .dart_tool/
