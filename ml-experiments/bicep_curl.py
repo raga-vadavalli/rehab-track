@@ -1,4 +1,3 @@
-
 import math
 
 
@@ -24,22 +23,34 @@ def calculate_angle(a, b, c):
 
 
 class BicepCurlCounter:
-    def __init__(self):
-        self.reps = 0
-        self.phase = "waiting"
+    def __init__(self, extension_angle=150, flexion_angle=60):
+        self.reps          = 0
+        self.phase         = "waiting"
+        self.extension_angle = extension_angle
+        self.flexion_angle   = flexion_angle
+
+        # Smoothing: keep a small rolling buffer of angles
+        self._buffer     = []
+        self._buffer_size = 5
+
+    def _smooth(self, angle):
+        self._buffer.append(angle)
+        if len(self._buffer) > self._buffer_size:
+            self._buffer.pop(0)
+        return sum(self._buffer) / len(self._buffer)
 
     def update(self, elbow_angle):
         if elbow_angle is None:
             return self.reps, self.phase
 
-        # Arm extended: ready position
-        if elbow_angle > 150:
+        angle = self._smooth(elbow_angle)
+
+        if angle > self.extension_angle:
             if self.phase == "flexed":
                 self.reps += 1
             self.phase = "extended"
 
-        # Arm curled
-        elif elbow_angle < 60:
+        elif angle < self.flexion_angle:
             if self.phase == "extended":
                 self.phase = "flexed"
 
@@ -50,26 +61,58 @@ def check_bicep_curl_posture(
     shoulder,
     elbow,
     wrist,
+    hip,
     visibility_threshold=0.5,
 ):
     """
-    shoulder, elbow, wrist are MediaPipe landmarks.
-    Returns a simple feedback message.
+    shoulder, elbow, wrist, hip are MediaPipe landmarks.
+    Returns (message: str, is_valid: bool, shoulder_angle: float|None).
+    is_valid=True only when form is good enough to count a rep.
     """
 
-    points = [shoulder, elbow, wrist]
+    # ── 1. Visibility ────────────────────────────────────────────────────────
+    for point, name in [(shoulder, "shoulder"), (elbow, "elbow"),
+                        (wrist, "wrist"), (hip, "hip")]:
+        if getattr(point, "visibility", 0.0) < visibility_threshold:
+            return "Move into clear camera view", False, None
 
-    if any(
-        getattr(point, "visibility", 0.0) < visibility_threshold
-        for point in points
-    ):
-        return "Move into clear camera view"
+    # ── 2. Shoulder angle (elbow → shoulder → hip) ───────────────────────────
+    #   During a proper curl the upper arm stays close to the torso,
+    #   so the shoulder angle (elbow-shoulder-hip) should stay roughly
+    #   between 0° and 40°.  If it rises above ~50° the patient is
+    #   swinging the elbow forward / using momentum.
+    shoulder_angle = calculate_angle(
+        (elbow.x,    elbow.y),
+        (shoulder.x, shoulder.y),
+        (hip.x,      hip.y),
+    )
 
-    # Compare shoulder and elbow vertical positions.
-    # Image y increases downward.
-    arm_vertical_difference = abs(shoulder.y - elbow.y)
+    if shoulder_angle is not None and shoulder_angle > 50:
+        return (
+            f"Don't swing your elbow forward ({shoulder_angle:.0f}°)",
+            False,
+            shoulder_angle,
+        )
 
-    if arm_vertical_difference < 0.05:
-        return "Keep your upper arm steady"
+    # ── 3. Elbow must not flare out sideways ─────────────────────────────────
+    elbow_drift = abs(elbow.x - shoulder.x)
+    if elbow_drift > 0.15:
+        return "Keep your elbow close to your body", False, shoulder_angle
 
-    return "Arm position looks steady"
+    # ── 4. Elbow must be below the shoulder ──────────────────────────────────
+    if elbow.y < shoulder.y:
+        return "Lower your elbow below your shoulder", False, shoulder_angle
+
+    # ── 5. Upper arm must have some vertical extent ───────────────────────────
+    if abs(shoulder.y - elbow.y) < 0.05:
+        return "Keep your upper arm steady", False, shoulder_angle
+
+    # ── 6. Wrist must not dangle below elbow ─────────────────────────────────
+    if wrist.y > elbow.y + 0.25:
+        return "Raise your wrist — complete the curl", False, shoulder_angle
+
+    # ── 7. Shoulder must not be shrugging (shoulder too high) ────────────────
+    if shoulder_angle is not None and shoulder_angle < 0:
+        return "Relax your shoulder — don't shrug", False, shoulder_angle
+
+    return "Good form", True, shoulder_angle
